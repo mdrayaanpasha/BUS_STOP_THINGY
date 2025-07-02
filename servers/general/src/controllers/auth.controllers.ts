@@ -53,6 +53,37 @@ class AuthController {
             });
         }
     }
+
+    async Login(req: Request, res: Response): Promise<any> {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and password are required" });
+        }
+
+        try {
+            const user = await prisma.user.findUnique({ where: { email } });
+
+            if (!user) {
+                return res.status(401).json({ message: "Invalid email or password" });
+            }
+
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+
+            if (!isPasswordValid) {
+                return res.status(401).json({ message: "Invalid email or password" });
+            }
+
+            // Here you would typically generate a JWT token and send it back
+            return res.status(200).json({ message: "Login successful", user });
+
+        } catch (error) {
+            return res.status(500).json({
+                message: "Internal server error",
+                error: error instanceof Error ? error.message : "Unknown error"
+            });
+        }
+    }
 }
 
 export default new AuthController();
